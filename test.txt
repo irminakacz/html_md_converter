@@ -1,2 +1,0 @@
-Hello, this is a test file.
-We will see what happens.
