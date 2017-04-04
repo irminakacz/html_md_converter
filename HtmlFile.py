@@ -5,7 +5,9 @@ class HtmlFile:
     def convert_to_string(self, filename):
         if self.validate(filename):
             html = open(filename, 'r')
-            return html.read()
+            contents = html.read()
+            html.close()
+            return contents
         return None
 
 
