@@ -7,6 +7,8 @@ class TestConverterToMd(unittest.TestCase):
     def setUp(self):
         self.invalid = open('invalid.txt', 'w')
         self.empty = open('empty.html', 'w')
+        self.invalid.close()
+        self.empty.close()
 
     def test_missing_filename(self):
         sys.argv = ['convert_to_md.py']
@@ -33,8 +35,6 @@ class TestConverterToMd(unittest.TestCase):
         self.assertRegexpMatches(str(err.exception.code), 'File "' + self.empty.name + '" is empty.')
 
     def tearDown(self):
-        self.invalid.close()
-        self.empty.close()
         os.remove(self.invalid.name)
         os.remove(self.empty.name)
 
