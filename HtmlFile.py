@@ -2,6 +2,7 @@ import os
 
 class HtmlFile:
 
+
     def convert_to_string(self, filename):
         if self.validate(filename):
             html = open(filename, 'r')
@@ -30,6 +31,7 @@ class HtmlFile:
             raise TypeError("Invalid file format. Expecting HTML format.")
             return False
         return True
+
 
     def is_not_empty(self, filename):
         if not(os.path.getsize(filename) > 0):

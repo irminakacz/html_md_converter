@@ -5,8 +5,8 @@ from HtmlFile import HtmlFile
 
 class TestHtmlFile(unittest.TestCase):
 
-    def setUp(self):
 
+    def setUp(self):
         self.invalid = open('invalid.txt', 'w')
         self.empty = open('empty.html', 'w')
         self.valid = open('valid.html', 'w')
@@ -54,3 +54,5 @@ class TestHtmlFile(unittest.TestCase):
         os.remove(self.invalid.name)
         os.remove(self.empty.name)
         os.remove(self.valid.name)
+
+

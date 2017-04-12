@@ -23,6 +23,4 @@ try:
     markdown = converter.convert(html.read())
     #output = open("converted", "w")
     #output.write(markdown)
-finally:
-    html.close()
-    #markdown.close()
+    #output.close()
