@@ -19,8 +19,8 @@ except FileNotFoundError as err:
 except EOFError as err:
     sys.exit(err)
 
-try:
-    markdown = converter.convert(html.read())
-    #output = open("converted", "w")
-    #output.write(markdown)
-    #output.close()
+markdown = converter.convert(html)
+print(markdown)
+#output = open("converted", "w")
+#output.write(markdown)
+#output.close()
