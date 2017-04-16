@@ -16,16 +16,23 @@ html = f.read()
 minified = htmlmin.minify(html, remove_empty_space=True)
 soup = BeautifulSoup(minified, 'html.parser')
 
+
 def refine(node):
     for child in node:
         if isinstance(child, bs4.element.Tag):
-            refine(child)
+            if len(child.contents) > 0:
+                refine(child)
+            else:
+                if convertable(child):
+                    continue
+                else:
+                    child.replace_with('')
         else:
             if convertable(child.parent):
                 continue
             else:
-                child.parent.decompose()
+                child.parent.replace_with('')
+
 
 refine(soup)
 print(soup.prettify())
-
