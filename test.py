@@ -15,7 +15,6 @@ f = open("cleancode.html", "r")
 html = f.read()
 minified = htmlmin.minify(html, remove_empty_space=True)
 soup = BeautifulSoup(minified, 'html.parser')
-soup = soup.head
 
 def refine(node):
 
@@ -27,19 +26,13 @@ def refine(node):
                 if convertable(child):
                     continue
                 else:
-                    print("to be erased: " + str(child))
                     child.replace_with('')
         else:
-            if convertable(child.parent):
+            if convertable(node):
                 continue
             else:
-                print("to be erased through erasing parent: " + str(child))
-                child.parent.replace_with('')
+                node.replace_with('')
 
-        # when we're done with the children
-        # we take a look at the node itself
-
-        # delete or unwarp only when it's not convertable
         if not convertable(node):
             # have children?
             if len(node.contents) > 0:
@@ -52,26 +45,11 @@ def refine(node):
                         all_children_empty = False
 
                 if all_children_empty:
-                    print("to be erased by erasing not having children: " + str(node))
                     node.replace_with('')
-
-                # if they are all not convertable - kill it
-                all_children_non_convertable = True
-
-                for child in node:
-                    if convertable(child):
-                        all_children_non_convertable = False
-
-                if all_children_non_convertable:
-                    pass
-                    #node.replace_with('')
-
                 else:
-                    pass
-                    #print("children: " + str(node.contents[0]))
-                    #print("should be unwrapped: " + str(node.name))
+                    if node.parent:
+                        node.unwrap()
             else:
-                # no children? kill it
                 node.replace_with('')
 
 refine(soup)
