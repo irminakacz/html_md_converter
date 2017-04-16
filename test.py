@@ -33,6 +33,17 @@ def refine(node):
             else:
                 child.parent.replace_with('')
 
+    # jak już przepatrzymy dzieci to przyglądamy się węzłowi
+    if not convertable(node):
+        if len(node.contents) > 0:
+            all_children_empty = True
+            for child in node:
+                if child != '':
+                    all_children_empty = False
+            if all_children_empty:
+                node.replace_with('')
+        else:
+            node.replace_with('')
 
 refine(soup)
 print(soup.prettify())
