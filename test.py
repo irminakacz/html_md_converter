@@ -32,6 +32,7 @@ def refine(node):
                 continue
             else:
                 node.replace_with('')
+                return "Node deleted"
 
         if not convertable(node):
             # have children?

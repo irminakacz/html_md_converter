@@ -1,59 +1,54 @@
+import bs4
 from bs4 import BeautifulSoup
+import htmlmin
 
 class Converter:
 
     basic = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'strong', 'del',
                 'code', 'ol', 'ul', 'li', 'a', 'img', 'table', 'thead', 'tr',
-                'th', 'tbody', 'td', 'blockquote', 'hr', 'br']
-
+                'th', 'tbody', 'td', 'blockquote', 'hr', 'br', 'p']
 
     def convert(self, html):
-        html = BeautifulSoup(html, 'html.parser')
-        html = self.refine(html)
-        return html
+        minified = htmlmin.minify(html, remove_empty_space=True)
+        soup = BeautifulSoup(minified, 'html.parser')
+        self.refine(soup)
+        return soup
+
+    def convertable(self, node):
+        if node.name in self.basic:
+            return True
+        return False
+
+    def refine(self, node):
+
+        for child in node:
+            if isinstance(child, bs4.element.Tag):
+                if len(child.contents) > 0:
+                    self.refine(child)
+                else:
+                    if self.convertable(child):
+                        continue
+                    else:
+                        child.replace_with('')
+
+        if not self.convertable(node):
+            if len(node.contents) > 0:
+
+                all_children_empty = True
+                for child in node:
+                    if child != '':
+                        all_children_empty = False
+
+                if all_children_empty:
+                    node.replace_with('')
+                else:
+                    if node.parent:
+                        node.unwrap()
+            else:
+                node.replace_with('')
 
 
-    def refine(self, html):
-
-        """
-        html = self.clear_head(html)
-        html = self.clear_footer(html)
-        html = self.clear_scripts(html)
-        html = self.clear_empty_divs(html)
-        html = self.clear_empty_spans(html)
-        """
-        return html
-
-
-    def transform(self, html):
-        pass
-
-
-    def clear_head(self, html):
-        html.head.decompose()
-        return html
-
-
-    def clear_footer(self, html):
-        html.footer.decompose()
-        return html
-
-
-    def clear_scripts(self, html):
-        for script in html.find_all('script'):
-            script.decompose()
-        return html
-
-
-    def clear_empty_divs(self, html):
-        for empty_div in html.find_all('div'):
-            if len(empty_div.contents) == 0:
-                empty_div.decompose()
-        return html
-
-
-    def clear_empty_spans(self, html):
-        for empty_span in html.find_all('span'):
-            if len(empty_span.contents) == 0:
-                empty_span.decompose()
-        return html
+converter = Converter()
+f = open("cleancode.html", "r")
+html = f.read()
+print(converter.convert(html))
