@@ -62,10 +62,8 @@ class Converter:
 
 
     def all_children_empty(self, node):
-        for child in node:
-            if child != '':
-                return False
-        return True
+        empty_children = filter(lambda n: n != '', node)
+        return len(list(empty_children)) == 0
 
 
     def convertable(self, node):
