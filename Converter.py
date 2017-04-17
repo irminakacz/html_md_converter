@@ -26,30 +26,36 @@ class Converter:
     def refine_children(self, node):
         for child in node:
             if isinstance(child, bs4.element.Tag):
-                if len(child.contents) > 0:
+                if self.has_children(child):
                     self.refine(child)
-                elif self.convertable(child):
-                    continue
-                else:
+                elif not self.convertable(child):
                     child.replace_with('')
+            elif not self.convertable(node):
+                child.replace_with('')
 
 
     def refine_node(self, node):
-        if self.convertable(node):
-            return
-
-        if len(node.contents) > 0:
-            all_children_empty = True
-            for child in node:
-                if child != '':
-                    all_children_empty = False
-
-            if all_children_empty:
+        if not self.convertable(node):
+            if self.has_children(node):
+                if self.all_children_empty(node):
+                    node.replace_with('')
+                elif node.parent:
+                    node.unwrap()
+            else:
                 node.replace_with('')
-            elif node.parent:
-                node.unwrap()
-        else:
-            node.replace_with('')
+
+
+    def has_children(self, node):
+        if len(node.contents) > 0:
+            return True
+        return False
+
+
+    def all_children_empty(self, node):
+        for child in node:
+            if child != '':
+                return False
+        return True
 
 
     def convertable(self, node):
