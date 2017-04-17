@@ -1,5 +1,6 @@
 import bs4
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 import htmlmin
 
 class Converter:
@@ -25,30 +26,33 @@ class Converter:
 
     def refine_children(self, node):
         for child in node:
-            if isinstance(child, bs4.element.Tag):
-                if self.has_children(child):
-                    self.refine(child)
-                elif not self.convertable(child):
-                    child.replace_with('')
-            elif not self.convertable(node):
+            if isinstance(child, Tag):
+                self.refine_tag(child)
+
+        for child in node:
+            if not isinstance(child, Tag) and not self.convertable(node):
                 child.replace_with('')
 
 
+    def refine_tag(self, child):
+        if self.has_children(child):
+            self.refine(child)
+        elif not self.convertable(child):
+            child.replace_with('')
+
+
     def refine_node(self, node):
-        if not self.convertable(node):
-            if self.has_children(node):
-                if self.all_children_empty(node):
-                    node.replace_with('')
-                elif node.parent:
-                    node.unwrap()
-            else:
-                node.replace_with('')
+        if self.convertable(node):
+            return
+
+        if self.all_children_empty(node):
+            node.replace_with('')
+        if node.parent:
+            node.unwrap()
 
 
     def has_children(self, node):
-        if len(node.contents) > 0:
-            return True
-        return False
+        return len(node.contents) > 0
 
 
     def all_children_empty(self, node):
@@ -59,9 +63,7 @@ class Converter:
 
 
     def convertable(self, node):
-        if node.name in self.basic:
-            return True
-        return False
+        return node.name in self.basic
 
 
 converter = Converter()
