@@ -20,18 +20,24 @@ class Converter:
 
 
     def refine(self, node):
-        self.refine_children(node)
+        self.refine_tags(node)
+        self.refine_other_strings(node)
         self.refine_node(node)
 
 
-    def refine_children(self, node):
-        for child in node:
-            if isinstance(child, Tag):
-                self.refine_tag(child)
+    def refine_tags(self, node):
+        tag_children = filter(lambda child: isinstance(child, Tag), node)
 
-        for child in node:
-            if not isinstance(child, Tag) and not self.convertable(node):
-                child.replace_with('')
+        for tag in tag_children:
+            self.refine_tag(tag)
+
+
+    def refine_other_strings(self, node):
+        navigable_strings = filter(lambda child: not isinstance(child, Tag), node)
+        other_strings = filter(lambda child: not self.convertable(node), navigable_strings)
+
+        for string in other_strings:
+            string.replace_with('')
 
 
     def refine_tag(self, child):
