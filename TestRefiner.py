@@ -64,3 +64,21 @@ class TestHtmlFile(unittest.TestCase):
         self.assertFalse(soup.div)
         self.assertTrue(soup.h1)
 
+    def test_refine_navigable_strings(self):
+        html = "<span>Span</span><div>Div<h1>Hello</h1></div>"
+        soup = BeautifulSoup(html, 'html.parser')
+        self.refiner.refine_other_strings(soup.span)
+        self.assertTrue(self.refiner.all_children_empty(soup.span))
+        self.refiner.refine_other_strings(soup.div)
+        self.assertTrue(soup.div.h1)
+        self.assertEqual(soup.div.contents[0], '')
+        self.assertEqual(soup.div.contents[1], soup.div.h1)
+
+
+    def test_leaving_out_strings_when_refine_tags(self):
+        html = "NavigableString"
+        soup = BeautifulSoup(html, 'html.parser')
+        self.refiner.refine_tags(soup)
+        self.assertEqual(soup.text, "NavigableString")
+
+
