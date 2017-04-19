@@ -1,5 +1,6 @@
 import unittest
 from bs4 import BeautifulSoup
+import bs4
 import urllib
 from Converter import Converter
 import htmlmin

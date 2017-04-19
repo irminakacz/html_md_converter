@@ -3,10 +3,9 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 import htmlmin
 from Refiner import Refiner
+from BrTag import BrTag
 
 class Converter:
-
-
     def convert_html_to_markdown(self, html):
         minified = self.minify_html(html)
         nodes = self.transform_into_nodes(minified)
@@ -33,43 +32,41 @@ class Converter:
 
 
     def convert_node(self, node):
-        nodes_to_swap = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                         'em', 'strong', 'del', 'code', 'ol',
-                         'ul', 'a', 'img', 'table', 'blockquote',
-                         'hr', 'br', 'p']
+        emphasis = ('em', 'strong', 'del', 'code')
+        headers = ('h1', 'h2', 'h3', 'h4', 'h5', 'h6')
 
-        emphasis = ['em', 'strong', 'del', 'code']
-        headers = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+        element_to_forming_func = {
+            emphasis: self.apply_emphasis,
+            headers: self.form_header,
+            'p': self.unwrap_paragraph,
+            'br': self.break_line,
+            'hr': self.insert_horizontal_line,
+            'img': self.form_image,
+            'ol': self.form_ordered_list,
+            'ul': self.form_unordered_list,
+            'a': self.form_link,
+            'table': self.form_table,
+            'blockquote': self.form_quote,
+        }
 
-        if node.name == 'br':
-            self.break_line(node)
-        if node.name == 'hr':
-            self.insert_horizontal_line(node)
-        if node.name in emphasis:
-            self.apply_emphaisis(node)
-        if node.name in headers:
-            self.form_header(node)
-        if node.name == 'img':
-            self.form_image(node)
-        if node.name == 'ol':
-            self.form_ordered_list(node)
-        if node.name == 'ul':
-            self.form_unordered_list(node)
-        if node.name == 'a':
-            self.form_link(node)
-        if node.name == 'table':
-            self.form_table(node)
-        if node.name == 'blockquote':
-            self.form_quote(node)
-        if node.name == 'p':
-            node.replace_with(self.unwrap_contents(node))
+        # if using flat dictionary:
+        #
+        # if node.name in element_to_forming_func.keys():
+        #     element_to_forming_func[node.name](node)
+
+        for key in element_to_forming_func:
+            if isinstance(key, tuple) and node.name in key:
+                element_to_forming_func[key](node)
+            elif key == node.name:
+                element_to_forming_func[node.name](node)
+
+
+    def unwrap_paragraph(self, node):
+        node.replace_with(self.unwrap_contents(node))
 
 
     def unwrap_contents(self, node):
-        text = ''
-        for contents in node.contents:
-            text += str(contents)
-        return text
+        return ''.join(node.contents)
 
 
     def break_line(self, node):
@@ -80,18 +77,15 @@ class Converter:
         node.replace_with('\n\n----\n\n' + self.unwrap_contents(node))
 
 
-    def apply_emphaisis(self, node):
-        if node.name == 'em':
-            node.replace_with('*' + self.unwrap_contents(node) + '*')
+    def apply_emphasis(self, node):
+        symbol = {
+            'em': '*',
+            'strong': '__',
+            'del': '~~',
+            'code': '`'
+        }[node.name]
 
-        if node.name == 'strong':
-            node.replace_with('__' + self.unwrap_contents(node) + '__')
-
-        if node.name == 'del':
-            node.replace_with('~~' + self.unwrap_contents(node) + '~~')
-
-        if node.name == 'code':
-            node.replace_with('`' + self.unwrap_contents(node) + '`')
+        node.replace_with(symbol + self.unwrap_contents(node) + symbol)
 
 
     def form_header(self, node):
@@ -112,20 +106,21 @@ class Converter:
 
 
     def form_ordered_list(self, node):
-        order = 1;
         for item in node:
+            order = node.index(item) + 1
             item.replace_with(str(order) + '. ' + self.unwrap_contents(item) + '\n')
-            order += 1
-        if node.parent.name == 'li':
-            node.replace_with('\n' + self.unwrap_contents(node)[:-1])
-        else:
-            node.unwrap()
+
+        self.handle_if_nested(node)
 
 
     def form_unordered_list(self, node):
         for item in node:
             item.replace_with('- ' + self.unwrap_contents(item) + '\n')
 
+        self.handle_if_nested(node)
+
+
+    def handle_if_nested(self, node):
         if node.parent.name == 'li':
             node.replace_with('\n' + self.unwrap_contents(node)[:-1])
         else:
@@ -142,13 +137,12 @@ class Converter:
 
     def form_table(self, node):
         for row in node:
-            if isinstance(row, Tag):
-                if row.name == 'thead':
-                    self.form_table_head(row)
-                    continue
-                for cell in row:
-                    cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
-                row.replace_with(self.unwrap_contents(row) + '|\n')
+            if row.name == 'thead':
+                self.form_table_head(row)
+                continue
+            for cell in row:
+                self.form_table_cell(cell)
+            self.form_table_row(row)
         node.unwrap()
 
 
@@ -160,6 +154,14 @@ class Converter:
             separator += '|' + '-' * cell_width
         node.tr.replace_with(self.unwrap_contents(node.tr) + '|\n' + separator + '|\n')
         node.unwrap()
+
+
+    def form_table_cell(self, cell):
+        cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
+
+
+    def form_table_row(self, row):
+        row.replace_with(self.unwrap_contents(row) + '|\n')
 
 
     def form_quote(self, node):
