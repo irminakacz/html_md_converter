@@ -60,18 +60,3 @@ class Refiner:
 
     def convertable(self, node):
         return node.name in self.basic
-
-
-refiner = Refiner()
-f = open("cleancode.html", "r")
-html = f.read()
-minified = htmlmin.minify(html, remove_empty_space=True)
-soup = BeautifulSoup(minified, 'html.parser')
-refiner.refine(soup)
-output = str(soup.prettify())
-
-good_one = open("output.html", "r")
-if (good_one.read() == output):
-    print("OK")
-else:
-    print(output)

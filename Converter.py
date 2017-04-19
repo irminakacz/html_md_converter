@@ -2,81 +2,156 @@ import bs4
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import htmlmin
+from Refiner import Refiner
 
 class Converter:
 
 
-    basic = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'strong', 'del',
-                'code', 'ol', 'ul', 'li', 'a', 'img', 'table', 'thead', 'tr',
-                'th', 'tbody', 'td', 'blockquote', 'hr', 'br', 'p']
+    def convert_html_to_markdown(self, html):
+        minified = self.minify_html(html)
+        nodes = self.transform_into_nodes(minified)
+        Refiner().refine(nodes)
+        self.convert(nodes)
+        return str(nodes)
 
 
-    def convert(self, html):
-        minified = htmlmin.minify(html, remove_empty_space=True)
-        soup = BeautifulSoup(minified, 'html.parser')
-        self.refine(soup)
-        #markdown = self.swap_tags(soup)
-        return str(soup.prettify())
+    def minify_html(self, html):
+        return htmlmin.minify(html, remove_empty_space=True)
 
 
-    def refine(self, node):
-        self.refine_tags(node)
-        self.refine_other_strings(node)
-        self.refine_node(node)
+    def transform_into_nodes(self, html):
+        return BeautifulSoup(html, 'html.parser')
 
 
-    def refine_tags(self, node):
-        tag_children = filter(lambda child: isinstance(child, Tag), node)
-
-        for tag in tag_children:
-            self.refine_tag(tag)
-
-
-    def refine_other_strings(self, node):
-        navigable_strings = filter(lambda child: not isinstance(child, Tag), node)
-        other_strings = filter(lambda child: not self.convertable(node), navigable_strings)
-
-        for string in other_strings:
-            string.replace_with('')
-
-
-    def refine_tag(self, child):
-        if self.has_children(child):
-            self.refine(child)
-        elif not self.convertable(child):
-            child.replace_with('')
-
-
-    def refine_node(self, node):
-        if self.convertable(node):
+    def convert(self, node):
+        if not isinstance(node, Tag):
             return
 
-        if self.all_children_empty(node):
-            node.replace_with('')
-        if node.parent:
-            node.unwrap()
+        for child in node:
+            self.convert(child)
+        self.convert_node(node)
 
 
-    def has_children(self, node):
-        return len(node.contents) > 0
+    def convert_node(self, node):
+        nodes_to_swap = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                         'em', 'strong', 'del', 'code', 'ol',
+                         'ul', 'a', 'img', 'table', 'blockquote',
+                         'hr', 'br', 'p']
+
+        emphasis = ['em', 'stron', 'del', 'code']
+        headers = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+
+        if node.name == 'br':
+            self.break_line(node)
+        if node.name == 'hr':
+            self.insert_horizontal_line(node)
+        if node.name in emphasis:
+            self.apply_emphaisis(node)
+        if node.name in headers:
+            self.form_header(node)
+        if node.name == 'img':
+            self.form_image(node)
+        if node.name == 'ol':
+            self.form_ordered_list(node)
+        if node.name == 'ul':
+            self.form_unordered_list(node)
+        if node.name == 'a':
+            self.form_link(node)
+        if node.name == 'table':
+            self.form_table(node)
+        if node.name == 'blockquote':
+            self.form_quote(node)
+        if node.name == 'p':
+            node.replace_with(self.unwrap_contents(node) + '\n')
 
 
-    def all_children_empty(self, node):
-        empty_children = filter(lambda n: n != '', node)
-        return len(list(empty_children)) == 0
+    def unwrap_contents(self, node):
+        text = ''
+        for contents in node.contents:
+            text += str(contents)
+        return text
 
 
-    def convertable(self, node):
-        return node.name in self.basic
+    def break_line(self, node):
+        node.replace_with('\n' + self.unwrap_contents(node))
+
+
+    def insert_horizontal_line(self, node):
+        node.replace_with('\n\n----\n\n' + self.unwrap_contents(node))
+
+
+    def apply_emphaisis(self, node):
+        if node.name == 'em':
+            node.replace_with('*' + self.unwrap_contents(node) + '*')
+
+        if node.name == 'strong':
+            node.replace_with('__' + self.unwrap_contents(node) + '__')
+
+        if node.name == 'del':
+            node.replace_with('~~' + self.unwrap_contents(node) + '~~')
+
+        if node.name == 'code':
+            node.replace_with('`' + self.unwrap_contents(node) + '`')
+
+
+    def form_header(self, node):
+        header_type = int(node.name[1])
+        node.replace_with('\n' + '#' * header_type + ' ' +
+                          self.unwrap_contents(node) + '\n')
+
+
+    def form_image(self, node):
+        if 'alt' in node and 'title' in node:
+            node.replace_with('![' + node['alt'] + '](' + node['src'] + ' "' + node['title'] + '")')
+        elif 'alt' in node:
+            node.replace_with('![' + node['alt'] + '](' + node['src'] + ')')
+        elif 'title' in node:
+            node.replace_with('![](' + node['src'] + ' "' + node['title'] + '")')
+        else:
+            node.replace_with('![](' + node['src'] + ')')
+
+
+    def form_ordered_list(self, node):
+        contents = node.contents
+        order = 1;
+        for item in node:
+            if isinstance(item, Tag):
+                self.convert(item)
+            item.replace_with(str(order) + '. ' + str(item.contents[0]) + '\n')
+            order += 1
+        node.unwrap()
+
+    def form_unordered_list(self, node):
+        contents = node.contents
+        for item in node:
+            if isinstance(item, Tag):
+                self.convert(item)
+            item.replace_with('- ' + str(item.contents[0]) + '\n')
+        node.unwrap()
+
+    def form_link(self, node):
+        if 'title' in node:
+            node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href']
+                              + ' "' + node['title'] + '")')
+        else:
+            node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href'] + ')')
+
+    def form_table(self):
+        contents = node.contents
+        for row in node:
+            if row.name == 'thead':
+                for tcell in row:
+                    tcell.replace_with('| ' + str(tcell.contents[0]) + ' ')
+                row.replace_with(row.contents[0] + '|\n')
+            for cell in row:
+                cell.replace_with('| ' + str(cell.contents[0]) + ' ')
+                row.replace_with(row.contents[0] + '|\n')
+        node.unwrap()
+
+    def swap_quotes(self):
+        node.replace_with('> ' + self.unwrap_contents(node))
 
 
 converter = Converter()
-f = open("cleancode.html", "r")
-html = f.read()
-output = converter.convert(html)
-
-good_one = open("output.html", "r")
-if (good_one.read() == output):
-    print("OK")
-else:
-    print(output)
+f = open('cleancode.html', 'r')
+converter.convert_html_to_markdown(f.read())
