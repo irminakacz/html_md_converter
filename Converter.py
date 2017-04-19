@@ -38,7 +38,7 @@ class Converter:
                          'ul', 'a', 'img', 'table', 'blockquote',
                          'hr', 'br', 'p']
 
-        emphasis = ['em', 'stron', 'del', 'code']
+        emphasis = ['em', 'strong', 'del', 'code']
         headers = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 
         if node.name == 'br':
@@ -114,15 +114,22 @@ class Converter:
     def form_ordered_list(self, node):
         order = 1;
         for item in node:
-            item.replace_with(str(order) + '. ' + str(item.contents[0]) + '\n')
+            item.replace_with(str(order) + '. ' + self.unwrap_contents(item) + '\n')
             order += 1
-        node.unwrap()
+        if node.parent.name == 'li':
+            node.replace_with('\n' + self.unwrap_contents(node)[:-1])
+        else:
+            node.unwrap()
 
 
     def form_unordered_list(self, node):
         for item in node:
-            item.replace_with('- ' + str(item.contents[0]) + '\n')
-        node.unwrap()
+            item.replace_with('- ' + self.unwrap_contents(item) + '\n')
+
+        if node.parent.name == 'li':
+            node.replace_with('\n' + self.unwrap_contents(node)[:-1])
+        else:
+            node.unwrap()
 
 
     def form_link(self, node):

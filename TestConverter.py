@@ -111,12 +111,11 @@ class TestConverter(unittest.TestCase):
         html = """
         <ol>
             <li>one</li>
-            <li><ul>
-                <li>item1</li>
-                <li>item2</li>
-                <li>item3</li>
+            <li>two<ul>
+                    <li>item1</li>
+                    <li>item2</li>
+                    <li>item3</li>
             </ul></li>
-            <li>two</li>
             <li>three</li>
         </ol>
         """
@@ -124,10 +123,85 @@ class TestConverter(unittest.TestCase):
         soup = BeautifulSoup(minified, 'html.parser')
         self.converter.convert(soup)
         self.assertEqual(soup.contents[0], '1. one\n')
-        self.assertEqual(soup.contents[1], '- item1\n')
-        self.assertEqual(soup.contents[2], '- item2\n')
-        self.assertEqual(soup.contents[3], '- item3\n')
-        self.assertEqual(soup.contents[4], '2. two\n')
-        self.assertEqual(soup.contents[5], '3. three\n')
+        self.assertEqual(soup.contents[1], '2. two\n- item1\n- item2\n- item3\n')
+        self.assertEqual(soup.contents[2], '3. three\n')
+
+
+    def test_forming_image_with_all_attributes(self):
+        html = '<img src="www.example.com" alt="text" title="title">'
+        soup = BeautifulSoup(html, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '![text](www.example.com "title")')
+
+
+    def test_forming_image_with_title_attribute(self):
+        html = '<img src="www.example.com" title="title">'
+        soup = BeautifulSoup(html, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '![](www.example.com "title")')
+
+
+    def test_forming_image_with_alt_attribute(self):
+        html = '<img src="www.example.com" alt="text">'
+        soup = BeautifulSoup(html, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '![text](www.example.com)')
+
+
+    def test_forming_headers(self):
+        html = """
+        <h1>header1</h1>
+        <h2>header2</h2>
+        <h3>header3</h3>
+        <h4>header4</h4>
+        <h5>header5</h5>
+        <h6>header6</h6>
+        """
+        minified = htmlmin.minify(html, remove_empty_space=True)
+        soup = BeautifulSoup(minified, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '\n# header1\n')
+        self.assertEqual(soup.contents[1], '\n## header2\n')
+        self.assertEqual(soup.contents[2], '\n### header3\n')
+        self.assertEqual(soup.contents[3], '\n#### header4\n')
+        self.assertEqual(soup.contents[4], '\n##### header5\n')
+        self.assertEqual(soup.contents[5], '\n###### header6\n')
+
+
+    def test_appling_emphasis(self):
+        html = """
+        <em>italic</em>
+        <strong>bold</strong>
+        <del>deleted</del>
+        <code>code</code>
+        """
+        minified = htmlmin.minify(html, remove_empty_space=True)
+        soup = BeautifulSoup(minified, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '*italic*')
+        self.assertEqual(soup.contents[1], '__bold__')
+        self.assertEqual(soup.contents[2], '~~deleted~~')
+        self.assertEqual(soup.contents[3], '`code`')
+
+
+    def test_inserting_horizontal_line(self):
+        html = "<hr>"
+        soup = BeautifulSoup(html, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '\n\n----\n\n')
+
+
+    def test_breaking_line(self):
+        html = "<br><br>"
+        soup = BeautifulSoup(html, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], '\n\n')
+
+
+    def test_unwrapping_contents(self):
+        html = "<p>Hello<h1>Header</h1><ul><li>one</li><li>two</li></p>"
+        soup = BeautifulSoup(html, 'html.parser')
+        self.converter.convert(soup)
+        self.assertEqual(soup.contents[0], 'Hello\n# Header\n- one\n- two\n')
 
 
