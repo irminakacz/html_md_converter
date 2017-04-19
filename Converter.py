@@ -62,7 +62,7 @@ class Converter:
         if node.name == 'blockquote':
             self.form_quote(node)
         if node.name == 'p':
-            node.replace_with(self.unwrap_contents(node) + '\n')
+            node.replace_with(self.unwrap_contents(node))
 
 
     def unwrap_contents(self, node):
@@ -101,57 +101,61 @@ class Converter:
 
 
     def form_image(self, node):
-        if 'alt' in node and 'title' in node:
+        if 'alt' in node.attrs and 'title' in node.attrs:
             node.replace_with('![' + node['alt'] + '](' + node['src'] + ' "' + node['title'] + '")')
-        elif 'alt' in node:
+        elif 'alt' in node.attrs:
             node.replace_with('![' + node['alt'] + '](' + node['src'] + ')')
-        elif 'title' in node:
+        elif 'title' in node.attrs:
             node.replace_with('![](' + node['src'] + ' "' + node['title'] + '")')
         else:
             node.replace_with('![](' + node['src'] + ')')
 
 
     def form_ordered_list(self, node):
-        contents = node.contents
         order = 1;
         for item in node:
-            if isinstance(item, Tag):
-                self.convert(item)
             item.replace_with(str(order) + '. ' + str(item.contents[0]) + '\n')
             order += 1
         node.unwrap()
 
+
     def form_unordered_list(self, node):
-        contents = node.contents
         for item in node:
-            if isinstance(item, Tag):
-                self.convert(item)
             item.replace_with('- ' + str(item.contents[0]) + '\n')
         node.unwrap()
 
+
     def form_link(self, node):
-        if 'title' in node:
+        if 'title' in node.attrs:
             node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href']
                               + ' "' + node['title'] + '")')
         else:
             node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href'] + ')')
 
-    def form_table(self):
-        contents = node.contents
+
+    def form_table(self, node):
         for row in node:
-            if row.name == 'thead':
-                for tcell in row:
-                    tcell.replace_with('| ' + str(tcell.contents[0]) + ' ')
-                row.replace_with(row.contents[0] + '|\n')
-            for cell in row:
-                cell.replace_with('| ' + str(cell.contents[0]) + ' ')
-                row.replace_with(row.contents[0] + '|\n')
+            if isinstance(row, Tag):
+                if row.name == 'thead':
+                    self.form_table_head(row)
+                    continue
+                for cell in row:
+                    cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
+                row.replace_with(self.unwrap_contents(row) + '|\n')
         node.unwrap()
 
-    def swap_quotes(self):
+
+    def form_table_head(self, node):
+        separator = ''
+        for cell in node.tr:
+            cell_width = len(self.unwrap_contents(cell)) + 2
+            cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
+            separator += '|' + '-' * cell_width
+        node.tr.replace_with(self.unwrap_contents(node.tr) + '|\n' + separator + '|\n')
+        node.unwrap()
+
+
+    def form_quote(self, node):
         node.replace_with('> ' + self.unwrap_contents(node))
 
 
-converter = Converter()
-f = open('cleancode.html', 'r')
-converter.convert_html_to_markdown(f.read())
