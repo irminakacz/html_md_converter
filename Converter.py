@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 import htmlmin
 from Refiner import Refiner
-from BrTag import BrTag
 
 class Converter:
     def convert_html_to_markdown(self, html):
@@ -32,12 +31,17 @@ class Converter:
 
 
     def convert_node(self, node):
-        emphasis = ('em', 'strong', 'del', 'code')
-        headers = ('h1', 'h2', 'h3', 'h4', 'h5', 'h6')
-
         element_to_forming_func = {
-            emphasis: self.apply_emphasis,
-            headers: self.form_header,
+            'em': self.apply_emphasis,
+            'strong': self.apply_emphasis,
+            'del': self.apply_emphasis,
+            'code': self.apply_emphasis,
+            'h1': self.form_header,
+            'h2': self.form_header,
+            'h3': self.form_header,
+            'h4': self.form_header,
+            'h5': self.form_header,
+            'h6': self.form_header,
             'p': self.unwrap_paragraph,
             'br': self.break_line,
             'hr': self.insert_horizontal_line,
@@ -49,16 +53,8 @@ class Converter:
             'blockquote': self.form_quote,
         }
 
-        # if using flat dictionary:
-        #
-        # if node.name in element_to_forming_func.keys():
-        #     element_to_forming_func[node.name](node)
-
-        for key in element_to_forming_func:
-            if isinstance(key, tuple) and node.name in key:
-                element_to_forming_func[key](node)
-            elif key == node.name:
-                element_to_forming_func[node.name](node)
+        if node.name in element_to_forming_func.keys():
+            element_to_forming_func[node.name](node)
 
 
     def unwrap_paragraph(self, node):
