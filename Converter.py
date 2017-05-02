@@ -62,7 +62,10 @@ class Converter:
 
 
     def unwrap_contents(self, node):
-        return ''.join(node.contents)
+        try:
+            return ''.join(node.contents)
+        except:
+            return ''
 
 
     def break_line(self, node):
@@ -92,13 +95,13 @@ class Converter:
 
     def convert_image(self, node):
         if 'alt' in node.attrs and 'title' in node.attrs:
-            node.replace_with('![' + node['alt'] + '](' + node['src'] + ' "' + node['title'] + '")')
+            node.replace_with('![' + node['alt'] + '](' + node['src'] + ' "' + node['title'] + '")' + self.unwrap_contents(node))
         elif 'alt' in node.attrs:
-            node.replace_with('![' + node['alt'] + '](' + node['src'] + ')')
+            node.replace_with('![' + node['alt'] + '](' + node['src'] + ')' + self.unwrap_contents(node))
         elif 'title' in node.attrs:
-            node.replace_with('![](' + node['src'] + ' "' + node['title'] + '")')
+            node.replace_with('![](' + node['src'] + ' "' + node['title'] + '")' + self.unwrap_contents(node))
         else:
-            node.replace_with('![](' + node['src'] + ')')
+            node.replace_with('![](' + node['src'] + ')' + self.unwrap_contents(node))
 
 
     def convert_ordered_list(self, node):
@@ -124,11 +127,12 @@ class Converter:
 
 
     def convert_link(self, node):
-        if 'title' in node.attrs:
-            node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href']
-                              + ' "' + node['title'] + '")')
-        else:
+        if 'title' in node.attrs and 'href' in node.attrs:
+            node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href'] + ' "' + node['title'] + '")')
+        elif 'href' in node.attrs:
             node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href'] + ')')
+        else:
+            node.replace_with('')
 
 
     def convert_table(self, node):
