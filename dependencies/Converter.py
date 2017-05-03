@@ -2,7 +2,7 @@ import bs4
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import htmlmin
-from Refiner import Refiner
+from dependencies.Refiner import Refiner
 
 class Converter:
     def convert_html_to_markdown(self, html):

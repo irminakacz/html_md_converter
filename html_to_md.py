@@ -2,8 +2,8 @@ import os
 import sys
 import urllib
 import os.path
-from Converter import Converter
-from HtmlFile import HtmlFile
+from dependencies.Converter import Converter
+from dependencies.HtmlFile import HtmlFile
 
 
 help_message = """HTML to markdown converter in Python\n\
@@ -19,6 +19,7 @@ def form_output_filename(url):
         url = url[:-4]
 
     output_filename = url.replace('http://', '')
+    output_filename = url.replace('https://', '')
     output_filename = output_filename.replace('/', '_')
     return output_filename
 
