@@ -12,31 +12,34 @@ class TestConverterToMd(unittest.TestCase):
         self.empty.close()
 
 
-    def test_missing_filename(self):
-        sys.argv = ['convert_to_md.py']
+    def test_help_message(self):
+        sys.argv = ['html_to_md.py']
         with self.assertRaises(SystemExit) as err:
-            exec(open('convert_to_md.py').read())
-        self.assertEqual(err.exception.code, "Missing filename.")
+            exec(open('html_to_md.py').read())
+        self.assertEqual(err.exception.code, """HTML to markdown converter in Python\n\
+usage:
+    python3 html_to_md.py -f file\n\
+    python3 html_to_md.py -u url""")
 
 
     def test_missing_file(self):
-        sys.argv = ['convert_to_md.py', 'missing.html']
+        sys.argv = ['html_to_md.py', '-f', 'missing.html']
         with self.assertRaises(SystemExit) as err:
-            exec(open('convert_to_md.py').read())
+            exec(open('html_to_md.py').read())
         self.assertRegexpMatches(str(err.exception.code), 'File "missing.html" not found.')
 
 
     def test_invalid_file_format(self):
-        sys.argv = ['convert_to_md.py', self.invalid.name]
+        sys.argv = ['html_to_md.py', '-f', self.invalid.name]
         with self.assertRaises(SystemExit) as err:
-            exec(open('convert_to_md.py').read())
+            exec(open('html_to_md.py').read())
         self.assertRegexpMatches(str(err.exception.code), "Invalid file format. Expecting HTML format.")
 
 
     def test_empty_file(self):
-        sys.argv = ['convert_to_md.py', self.empty.name]
+        sys.argv = ['html_to_md.py', '-f', self.empty.name]
         with self.assertRaises(SystemExit) as err:
-            exec(open('convert_to_md.py').read())
+            exec(open('html_to_md.py').read())
         self.assertRegexpMatches(str(err.exception.code), 'File "' + self.empty.name + '" is empty.')
 
 
