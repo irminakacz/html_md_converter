@@ -1,5 +1,5 @@
 import unittest
-from Refiner import Refiner
+from dependencies.Refiner import Refiner
 import bs4
 from bs4 import BeautifulSoup
 from bs4.element import Tag
@@ -68,10 +68,9 @@ class TestHtmlFile(unittest.TestCase):
         html = "<span>Span</span><div>Div<h1>Hello</h1></div>"
         soup = BeautifulSoup(html, 'html.parser')
         self.refiner.refine_other_strings(soup.span)
-        self.assertTrue(self.refiner.all_children_empty(soup.span))
         self.refiner.refine_other_strings(soup.div)
         self.assertTrue(soup.div.h1)
-        self.assertEqual(soup.div.contents[0], '')
+        self.assertEqual(soup.div.contents[0], 'Div')
         self.assertEqual(soup.div.contents[1], soup.div.h1)
 
 

@@ -5,7 +5,12 @@ import htmlmin
 from dependencies.Refiner import Refiner
 
 class Converter:
+    """Converter"""
     def convert_html_to_markdown(self, html):
+        """convert_html_to_markdown
+
+        :param html:
+        """
         minified = self.minify_html(html)
         nodes = self.transconvert_into_nodes(minified)
         Refiner().refine(nodes)
@@ -14,14 +19,26 @@ class Converter:
 
 
     def minify_html(self, html):
+        """minify_html
+
+        :param html:
+        """
         return htmlmin.minify(html, remove_empty_space=True)
 
 
     def transconvert_into_nodes(self, html):
+        """transconvert_into_nodes
+
+        :param html:
+        """
         return BeautifulSoup(html, 'html.parser')
 
 
     def convert(self, node):
+        """convert
+
+        :param node:
+        """
         if not isinstance(node, Tag):
             return
 
@@ -31,6 +48,10 @@ class Converter:
 
 
     def convert_node(self, node):
+        """convert_node
+
+        :param node:
+        """
         element_to_forming_func = {
             'em': self.apply_emphasis,
             'strong': self.apply_emphasis,
@@ -58,10 +79,18 @@ class Converter:
 
 
     def unwrap_paragraph(self, node):
+        """unwrap_paragraph
+
+        :param node:
+        """
         node.replace_with(self.unwrap_contents(node))
 
 
     def unwrap_contents(self, node):
+        """unwrap_contents
+
+        :param node:
+        """
         try:
             return ''.join(node.contents)
         except:
@@ -69,14 +98,26 @@ class Converter:
 
 
     def break_line(self, node):
+        """break_line
+
+        :param node:
+        """
         node.replace_with('\n' + self.unwrap_contents(node))
 
 
     def insert_horizontal_line(self, node):
+        """insert_horizontal_line
+
+        :param node:
+        """
         node.replace_with('\n\n----\n\n' + self.unwrap_contents(node))
 
 
     def apply_emphasis(self, node):
+        """apply_emphasis
+
+        :param node:
+        """
         symbol = {
             'em': '*',
             'strong': '__',
@@ -88,12 +129,20 @@ class Converter:
 
 
     def convert_header(self, node):
+        """convert_header
+
+        :param node:
+        """
         header_type = int(node.name[1])
         node.replace_with('\n' + '#' * header_type + ' ' +
                           self.unwrap_contents(node) + '\n')
 
 
     def convert_image(self, node):
+        """convert_image
+
+        :param node:
+        """
         if 'alt' in node.attrs and 'title' in node.attrs:
             node.replace_with('![' + node['alt'] + '](' + node['src'] + ' "' + node['title'] + '")' + self.unwrap_contents(node))
         elif 'alt' in node.attrs:
@@ -105,6 +154,10 @@ class Converter:
 
 
     def convert_ordered_list(self, node):
+        """convert_ordered_list
+
+        :param node:
+        """
         for item in node:
             order = node.index(item) + 1
             item.replace_with(str(order) + '. ' + self.unwrap_contents(item) + '\n')
@@ -113,6 +166,10 @@ class Converter:
 
 
     def convert_unordered_list(self, node):
+        """convert_unordered_list
+
+        :param node:
+        """
         for item in node:
             item.replace_with('- ' + self.unwrap_contents(item) + '\n')
 
@@ -120,6 +177,10 @@ class Converter:
 
 
     def handle_if_nested(self, node):
+        """handle_if_nested
+
+        :param node:
+        """
         if node.parent.name == 'li':
             node.replace_with('\n' + self.unwrap_contents(node)[:-1])
         else:
@@ -127,6 +188,10 @@ class Converter:
 
 
     def convert_link(self, node):
+        """convert_link
+
+        :param node:
+        """
         if 'title' in node.attrs and 'href' in node.attrs:
             node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href'] + ' "' + node['title'] + '")')
         elif 'href' in node.attrs:
@@ -136,6 +201,10 @@ class Converter:
 
 
     def convert_table(self, node):
+        """convert_table
+
+        :param node:
+        """
         for row in node:
             if row.name == 'thead':
                 self.convert_table_head(row)
@@ -147,6 +216,10 @@ class Converter:
 
 
     def convert_table_head(self, node):
+        """convert_table_head
+
+        :param node:
+        """
         separator = ''
         for cell in node.tr:
             cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
@@ -156,6 +229,10 @@ class Converter:
 
 
     def convert_table_cell(self, cell):
+        """convert_table_cell
+
+        :param cell:
+        """
         try:
             cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
         except:
@@ -163,10 +240,18 @@ class Converter:
 
 
     def convert_table_row(self, row):
+        """convert_table_row
+
+        :param row:
+        """
         row.replace_with(self.unwrap_contents(row) + '|\n')
 
 
     def convert_quote(self, node):
+        """convert_quote
+
+        :param node:
+        """
         node.replace_with('> ' + self.unwrap_contents(node))
 
 
