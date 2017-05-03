@@ -3,4 +3,5 @@
 *.html
 *.md
 __pycache__
+__pycache__/*
 tags

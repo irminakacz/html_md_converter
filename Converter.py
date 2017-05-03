@@ -132,7 +132,7 @@ class Converter:
         elif 'href' in node.attrs:
             node.replace_with('[' + self.unwrap_contents(node) + '](' + node['href'] + ')')
         else:
-            node.replace_with('')
+            node.replace_with(self.unwrap_contents(node))
 
 
     def convert_table(self, node):
@@ -149,15 +149,17 @@ class Converter:
     def convert_table_head(self, node):
         separator = ''
         for cell in node.tr:
-            cell_width = len(self.unwrap_contents(cell)) + 2
             cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
-            separator += '|' + '-' * cell_width
+            separator += '|' + '---'
         node.tr.replace_with(self.unwrap_contents(node.tr) + '|\n' + separator + '|\n')
         node.unwrap()
 
 
     def convert_table_cell(self, cell):
-        cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
+        try:
+            cell.replace_with('| ' + self.unwrap_contents(cell) + ' ')
+        except:
+            pass
 
 
     def convert_table_row(self, row):

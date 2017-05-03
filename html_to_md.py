@@ -5,15 +5,29 @@ import os.path
 from Converter import Converter
 from HtmlFile import HtmlFile
 
+
 help_message = """HTML to markdown converter in Python\n\
 usage:
     python3 html_to_md.py -f file\n\
     python3 html_to_md.py -u url\n"""
 
+
+def form_output_filename(url):
+    if url.endswith('.html'):
+        url = url[:-5]
+    if url.endswith('.php'):
+        url = url[:-4]
+
+    output_filename = url.replace('http://', '')
+    output_filename = output_filename.replace('/', '_')
+    return output_filename
+
+
 def getFile(mode):
     if (mode == "-f"):
         try:
             filename = sys.argv[2]
+            output_filename = filename[:-5]
         except IndexError:
             sys.exit("Missing filename")
 
@@ -31,12 +45,14 @@ def getFile(mode):
         temp = open("temporary_html_file.html", "w")
         temp.write(html.read().decode('utf-8'))
         filename = temp.name
+        output_filename = form_output_filename(url)
         temp.close()
 
     else:
         sys.exit("Invalid mode (must be -f or -u)")
 
-    return filename
+    return filename, output_filename
+
 
 ############# main script body ############
 try:
@@ -44,7 +60,7 @@ try:
 except IndexError:
     sys.exit(help_message)
 
-filename = getFile(mode)
+filename, output_filename = getFile(mode)
 
 try:
     html = HtmlFile().convert_to_string(filename)
@@ -56,7 +72,7 @@ except EOFError as err:
     sys.exit(err)
 
 markdown = Converter().convert_html_to_markdown(html)
-output = open(filename[:-4] + "md", "w")
+output = open(output_filename + ".md", "w")
 output.write(markdown)
 output.close()
 

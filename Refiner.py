@@ -29,7 +29,9 @@ class Refiner:
         other_strings = filter(lambda child: not self.convertable(node), navigable_strings)
 
         for string in other_strings:
-            string.replace_with('')
+            if string.parent.name != 'div':
+                if string.parent.name != 'span':
+                    string.replace_with('')
 
 
     def refine_tag(self, child):

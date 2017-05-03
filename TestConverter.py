@@ -40,7 +40,7 @@ class TestConverter(unittest.TestCase):
         minified = htmlmin.minify(html, remove_empty_space=True)
         soup = BeautifulSoup(minified, 'html.parser')
         self.converter.convert(soup)
-        self.assertEqual(soup.contents[0], "| One | Two |\n|-----|-----|\n")
+        self.assertEqual(soup.contents[0], "| One | Two |\n|---|---|\n")
         self.assertEqual(soup.contents[1], "| 1 1 | 1 2 |\n")
         self.assertEqual(soup.contents[2], "| 2 1 | 2 2 |\n")
 
@@ -64,7 +64,7 @@ class TestConverter(unittest.TestCase):
         minified = htmlmin.minify(html, remove_empty_space=True)
         soup = BeautifulSoup(minified, 'html.parser')
         self.converter.convert(soup)
-        self.assertEqual(soup.contents[0], "| One | Two |\n|-----|-----|\n")
+        self.assertEqual(soup.contents[0], "| One | Two |\n|---|---|\n")
         self.assertEqual(soup.contents[1], "| Paragraph1 | *Emphasis* |\n")
         self.assertEqual(soup.contents[2], "| - one\n- two\n- three\n | [link](www.example.com) |\n")
 
