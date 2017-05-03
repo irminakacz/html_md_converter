@@ -25,7 +25,7 @@ def getFile(mode):
 
         try:
             html = urllib.request.urlopen(url)
-        except URLError:
+        except ValueError:
             sys.exit("Invalid url")
 
         temp = open("temporary_html_file.html", "w")

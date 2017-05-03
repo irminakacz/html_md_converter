@@ -1,9 +1,9 @@
 import unittest
+import urllib
 import sys
 import os
 
-class TestConverterToMd(unittest.TestCase):
-
+class TestScript(unittest.TestCase):
 
     def setUp(self):
         self.invalid = open('invalid.txt', 'w')
@@ -12,14 +12,28 @@ class TestConverterToMd(unittest.TestCase):
         self.empty.close()
 
 
-    def test_help_message(self):
+    def test_missing_arguments(self):
         sys.argv = ['html_to_md.py']
         with self.assertRaises(SystemExit) as err:
             exec(open('html_to_md.py').read())
         self.assertEqual(err.exception.code, """HTML to markdown converter in Python\n\
 usage:
     python3 html_to_md.py -f file\n\
-    python3 html_to_md.py -u url""")
+    python3 html_to_md.py -u url\n""")
+
+
+    def test_invalid_mode(self):
+        sys.argv = ['html_to_md.py', 'missing.html']
+        with self.assertRaises(SystemExit) as err:
+            exec(open('html_to_md.py').read())
+        self.assertRegexpMatches(str(err.exception.code), "Invalid mode \(must be -f or -u\)")
+
+
+    def test_invalid_url(self):
+        sys.argv = ['html_to_md.py', '-u', 'missing.html']
+        with self.assertRaises(SystemExit) as err:
+            exec(open('html_to_md.py').read())
+        self.assertRegexpMatches(str(err.exception.code), "Invalid url")
 
 
     def test_missing_file(self):
